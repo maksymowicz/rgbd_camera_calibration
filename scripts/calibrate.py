@@ -50,6 +50,11 @@ def load_intrinsics(f):
 
     return calib
 
+def mouse_callback(event, x, y, flags, param):
+
+    if event == cv2.EVENT_FLAG_LBUTTON:
+        print x, y
+
 
 if __name__ == '__main__':
 
@@ -77,6 +82,8 @@ if __name__ == '__main__':
     f = glob.glob(abspath + '*.bag')[0]
     [I_rgb, I_depth] = load_images(f)
 
+    cv2.namedWindow('image')
+    cv2.setMouseCallback('image', mouse_callback)
 
     cv2.imshow('image', I_rgb)
     cv2.waitKey(0)
