@@ -14,6 +14,20 @@ import rosbag
 import sensor_msgs
 import sensor_msgs.msg
 
+global Kr
+global Kd
+global p_world
+global p_camera
+
+def calibrate():
+
+    global Kr
+    global Kd
+    global p_world
+    global p_camera
+
+    print 'here'
+
 def load_images(f):
 
     # bag file 
@@ -71,8 +85,18 @@ def load_intrinsics(f):
 
 def mouse_callback(event, x, y, flags, param):
 
+    global p_camera
+
     if event == cv2.EVENT_FLAG_LBUTTON:
-        print x, y
+
+        # append to list of points
+        p_camera.append([x, y])
+
+        # if we have enough points calibrate
+        if (len(p_camera) == len(p_world)):
+            calibrate()
+            p_camera = []
+
 
 
 if __name__ == '__main__':
@@ -83,20 +107,28 @@ if __name__ == '__main__':
                 ' <ground_truth.txt>' + ' <bag_file.bag>'
         sys.exit()
 
+    global Kr
+    global Kd
+    global p_world
+    global p_camera
+
     # intrinsic calibrations
     Kr = load_intrinsics(sys.argv[1])
     Kd = load_intrinsics(sys.argv[2])
 
     # load ground truth
-    gt = load_ground_truth(sys.argv[3])
+    p_world = load_ground_truth(sys.argv[3])
 
     # load the images from the bag file
     [I_rgb, I_depth] = load_images(sys.argv[4])
 
-    # 
+    # init camera points
+    p_camera = []
+
+    # click and do stuff
     cv2.namedWindow('image')
     cv2.setMouseCallback('image', mouse_callback)
-    cv2.imshow('image', 256 * I_depth)
+    cv2.imshow('image', I_rgb)
     cv2.waitKey(0)
 
 
