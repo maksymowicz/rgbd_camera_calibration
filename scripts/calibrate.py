@@ -122,6 +122,14 @@ if __name__ == '__main__':
     # load the images from the bag file
     [I_rgb, I_depth] = load_images(sys.argv[4])
 
+    # correct for distortion
+    I_rgb = cv2.undistort(I_rgb,
+            np.array(Kr['camera_matrix']['data']).reshape(3, 3),
+            np.array(Kr['distortion_coefficients']['data']))
+    I_depth = cv2.undistort(I_depth,
+            np.array(Kd['camera_matrix']['data']).reshape(3, 3),
+            np.array(Kd['distortion_coefficients']['data']))
+
     # init camera points
     p_camera = []
 
