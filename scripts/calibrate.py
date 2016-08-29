@@ -4,6 +4,7 @@ import sys
 import os
 import yaml
 import numpy as np
+import numpy.linalg
 import glob
 import cv2
 import pprint
@@ -17,16 +18,44 @@ import sensor_msgs.msg
 global Kr
 global Kd
 global p_world
-global p_camera
+global I_depth
+global coords
 
 def calibrate():
 
     global Kr
     global Kd
     global p_world
-    global p_camera
+    global I_depth
+    global coords
 
-    print 'here'
+    # convert to numpy array
+    x = np.array(coords)
+
+    # homogeneous coordinates
+    x_tilde = np.hstack((x, np.ones((len(x), 1))))
+
+    # extract calibration depth matrix
+    K = np.array(Kd['camera_matrix']['data']).reshape(3, 3)
+
+    # transformed
+    Xc = np.dot(np.linalg.inv(K), x_tilde.T)
+
+    # extract depth
+    s = np.array([I_depth[c[1], c[0]] for c in coords])
+
+    # scale 
+    X = np.multiply(Xc, np.tile(s, (3, 1)))
+
+    # transorm to x : out, y : left, z : up
+    R = np.array([
+        [0.0,   0.0,    1.0],
+        [-1.0,  0.0,    0.0],
+        [0.0,   -1.0,   0.0]])
+    p_camera = np.dot(R, X)
+
+
+    print X
 
 def load_images(f):
 
@@ -85,17 +114,19 @@ def load_intrinsics(f):
 
 def mouse_callback(event, x, y, flags, param):
 
-    global p_camera
+    global coords
 
     if event == cv2.EVENT_FLAG_LBUTTON:
 
         # append to list of points
-        p_camera.append([x, y])
+        coords.append([x, y])
 
-        # if we have enough points calibrate
-        if (len(p_camera) == len(p_world)):
-            calibrate()
-            p_camera = []
+        calibrate()
+
+        # # if we have enough points calibrate
+        # if (len(coords) == len(p_world)):
+        #     calibrate()
+        #     coords = []
 
 
 
@@ -110,7 +141,8 @@ if __name__ == '__main__':
     global Kr
     global Kd
     global p_world
-    global p_camera
+    global I_depth
+    global coords
 
     # intrinsic calibrations
     Kr = load_intrinsics(sys.argv[1])
@@ -131,7 +163,7 @@ if __name__ == '__main__':
             np.array(Kd['distortion_coefficients']['data']))
 
     # init camera points
-    p_camera = []
+    coords = []
 
     # click and do stuff
     cv2.namedWindow('image')
