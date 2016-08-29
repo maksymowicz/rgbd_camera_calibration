@@ -52,10 +52,40 @@ def calibrate():
         [0.0,   0.0,    1.0],
         [-1.0,  0.0,    0.0],
         [0.0,   -1.0,   0.0]])
-    p_camera = np.dot(R, X)
+    p_camera = np.dot(R, X).T
 
+    # build A matrix
+    dim = len(p_camera)
+    A = np.zeros((3*dim, 12))
+    for i in range(0, dim):
+        A[3*i,      0]  = p_camera[i, 0]
+        A[3*i,      1]  = p_camera[i, 1]
+        A[3*i,      2]  = p_camera[i, 2]
+        A[3*i,      9]  = 1
+        A[3*i + 1,  3]  = p_camera[i, 0]
+        A[3*i + 1,  4]  = p_camera[i, 1]
+        A[3*i + 1,  5]  = p_camera[i, 2]
+        A[3*i + 1,  10] = 1
+        A[3*i + 2,  6]  = p_camera[i, 0]
+        A[3*i + 2,  7]  = p_camera[i, 1]
+        A[3*i + 2,  8]  = p_camera[i, 2]
+        A[3*i + 2,  11] = 1
 
-    print X
+    # build b
+    b = np.reshape(p_world, 3*dim)
+
+    # least squares
+    x, r, rank, s = np.linalg.lstsq(A, b)
+
+    # extract elements from x
+    R = np.array([x[:3], x[3:6], x[6:9]])
+    t = x[9:]
+
+    # set singular values to one to make R orthogonal
+    U, S, V = np.linalg.svd(R)
+    R = np.dot(U, V)
+
+    return R, t
 
 def load_images(f):
 
@@ -121,12 +151,15 @@ def mouse_callback(event, x, y, flags, param):
         # append to list of points
         coords.append([x, y])
 
-        calibrate()
+        # if we have enough points calibrate
+        if (len(coords) == len(p_world)):
+            R, t = calibrate()
 
-        # # if we have enough points calibrate
-        # if (len(coords) == len(p_world)):
-        #     calibrate()
-        #     coords = []
+            # ship this out better
+            print R
+            print t
+
+            coords = []
 
 
 
