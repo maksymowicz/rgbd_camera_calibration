@@ -45,7 +45,7 @@ def calibrate():
     s = np.array([I_depth[c[1], c[0]] for c in coords])
 
     # scale 
-    X = np.multiply(Xc, np.tile(s, (3, 1)))
+    X = np.multiply(Xc, np.tile(s / 1000., (3, 1)))
 
     # transorm to x : out, y : left, z : up
     R = np.array([
@@ -116,9 +116,6 @@ def load_ground_truth(f):
     gt = []
     with open(f, 'r') as fstream:
 
-        # strip first line
-        header = fstream.readline()
-
         # for each line
         for line in fstream:
 
@@ -126,7 +123,13 @@ def load_ground_truth(f):
             cleanline = line.replace('\n', '').replace(' ', '')
 
             # parse
-            gt.append(cleanline.split(',')[1:-1])
+            gt.append(cleanline.split(','))
+
+    # cast to numpy array
+    gt = np.array(gt, dtype=np.float64)
+
+    # remove id
+    gt = gt[:, 1:]
 
     return np.array(gt)
 
@@ -145,6 +148,7 @@ def load_intrinsics(f):
 def mouse_callback(event, x, y, flags, param):
 
     global coords
+    global p_world
 
     if event == cv2.EVENT_FLAG_LBUTTON:
 
@@ -153,11 +157,15 @@ def mouse_callback(event, x, y, flags, param):
 
         # if we have enough points calibrate
         if (len(coords) == len(p_world)):
+
             R, t = calibrate()
 
-            # ship this out better
-            print R
-            print t
+            # print
+            pprint.pprint('Rotation:')
+            pprint.pprint(R)
+            pprint.pprint('Translation:')
+            pprint.pprint(t)
+
 
             coords = []
 
