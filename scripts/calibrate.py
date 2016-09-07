@@ -161,11 +161,10 @@ def mouse_callback(event, x, y, flags, param):
             R, t = calibrate()
 
             # print
-            pprint.pprint('Rotation:')
-            pprint.pprint(R)
-            pprint.pprint('Translation:')
-            pprint.pprint(t)
-
+            print('Rotation:')
+            print(R)
+            print('Translation:')
+            print(t)
 
             coords = []
 
