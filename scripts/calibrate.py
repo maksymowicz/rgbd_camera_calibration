@@ -14,6 +14,7 @@ import cv_bridge
 import rosbag
 import sensor_msgs
 import sensor_msgs.msg
+import quaternions as q
 
 global Kr
 global Kd
@@ -45,7 +46,7 @@ def calibrate():
     s = np.array([I_depth[c[1], c[0]] for c in coords])
 
     # scale 
-    X = np.multiply(Xc, np.tile(s / 1000., (3, 1)))
+    X = np.multiply(Xc, np.tile(s, (3, 1)))
 
     # transorm to x : out, y : left, z : up
     R = np.array([
@@ -58,28 +59,28 @@ def calibrate():
     dim = len(p_camera)
     A = np.zeros((3*dim, 12))
     for i in range(0, dim):
-        A[3*i,      0]  = p_camera[i, 0]
-        A[3*i,      1]  = p_camera[i, 1]
-        A[3*i,      2]  = p_camera[i, 2]
-        A[3*i,      9]  = 1
-        A[3*i + 1,  3]  = p_camera[i, 0]
-        A[3*i + 1,  4]  = p_camera[i, 1]
-        A[3*i + 1,  5]  = p_camera[i, 2]
-        A[3*i + 1,  10] = 1
-        A[3*i + 2,  6]  = p_camera[i, 0]
-        A[3*i + 2,  7]  = p_camera[i, 1]
-        A[3*i + 2,  8]  = p_camera[i, 2]
+        A[3*i,      0]  = p_world[i, 0]
+        A[3*i,      1]  = p_world[i, 1]
+        A[3*i,      2]  = p_world[i, 2]
+        A[3*i,      3]  = 1
+        A[3*i + 1,  4]  = p_world[i, 0]
+        A[3*i + 1,  5]  = p_world[i, 1]
+        A[3*i + 1,  6]  = p_world[i, 2]
+        A[3*i + 1,  7]  = 1
+        A[3*i + 2,  8]  = p_world[i, 0]
+        A[3*i + 2,  9]  = p_world[i, 1]
+        A[3*i + 2,  10] = p_world[i, 2]
         A[3*i + 2,  11] = 1
 
     # build b
-    b = np.reshape(p_world, 3*dim)
+    b = np.reshape(p_camera, 3*dim)
 
     # least squares
     x, r, rank, s = np.linalg.lstsq(A, b)
 
     # extract elements from x
-    R = np.array([x[:3], x[3:6], x[6:9]])
-    t = x[9:]
+    R = np.array([x[:3], x[4:7], x[8:11]])
+    t = np.array([x[3], x[7], x[11]])
 
     # set singular values to one to make R orthogonal
     U, S, V = np.linalg.svd(R)
@@ -97,17 +98,17 @@ def load_images(f):
 
     # extract rgb image
     msg = sensor_msgs.msg.Image()
-    for topic, msg, t in bag.read_messages(topics='/camera/rgb/image_raw'):
+    for topic, msg, t in bag.read_messages(topics='/xtion/rgb/image_raw'):
         pass
 
     I_rgb = bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
 
     # extract depth image
     msg = sensor_msgs.msg.Image()
-    for topic, msg, t in bag.read_messages(topics='/camera/depth/image_raw'):
+    for topic, msg, t in bag.read_messages(topics='/xtion/depth_registered/image_raw'):
         pass
 
-    I_depth = bridge.imgmsg_to_cv2(msg, desired_encoding="16UC1")
+    I_depth = bridge.imgmsg_to_cv2(msg, desired_encoding="32FC1")
 
     return I_rgb, I_depth
 
@@ -161,10 +162,13 @@ def mouse_callback(event, x, y, flags, param):
             R, t = calibrate()
 
             # print
-            print('Rotation:')
+            print('Rotation Matrix:')
             print(R)
             print('Translation:')
             print(t)
+            print('Quaternion:')
+            qat = q.rotation_matrix_to_quaternion(R)
+            print(qat)
 
             coords = []
 
