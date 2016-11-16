@@ -165,7 +165,7 @@ def mouse_callback(event, x, y, flags, param):
             print('Rotation Matrix:')
             print(R)
             print('Translation:')
-            print(t)
+            print(-t)
             print('Quaternion:')
             qat = q.rotation_matrix_to_quaternion(R)
             print(qat)
