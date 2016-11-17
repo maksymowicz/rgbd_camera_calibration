@@ -163,13 +163,16 @@ def mouse_callback(event, x, y, flags, param):
 
             R, t = calibrate()
 
+            # for a ROS static_transform_publisher we want the inverse of R,t
+            R_inv = np.linalg.inv(R)
+
             # print
             print('Rotation Matrix:')
-            print(R)
+            print(R_inv)
             print('Translation:')
             print(-t)
-            print('Quaternion:')
-            qat = q.rotation_matrix_to_quaternion(R)
+            print('Quaternion (w x y z):')
+            qat = q.rotation_matrix_to_quaternion(R_inv)
             print(qat)
 
             coords = []
