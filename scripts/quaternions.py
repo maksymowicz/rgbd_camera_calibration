@@ -9,7 +9,7 @@ def rotation_matrix_to_quaternion(R):
     warnings.filterwarnings("error")
     
     # matrix logarithm to get skew symmetric
-    S = sp.linalg.logm(R)
+    S = sp.linalg.logm(R).real
 
     # get values
     x = S[2, 1]
