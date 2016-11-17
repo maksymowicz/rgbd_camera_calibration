@@ -108,7 +108,7 @@ def load_images(f):
     for topic, msg, t in bag.read_messages(topics='/xtion/depth_registered/image_raw'):
         pass
 
-    I_depth = bridge.imgmsg_to_cv2(msg, desired_encoding="32FC1")
+    I_depth = bridge.imgmsg_to_cv2(msg)
 
     return I_rgb, I_depth
 
@@ -158,6 +158,8 @@ def mouse_callback(event, x, y, flags, param):
 
         # if we have enough points calibrate
         if (len(coords) == len(p_world)):
+
+            cv2.destroyWindow('image')
 
             R, t = calibrate()
 
