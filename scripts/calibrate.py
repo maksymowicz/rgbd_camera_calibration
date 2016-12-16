@@ -98,7 +98,7 @@ def load_images(f):
 
     # extract rgb image
     msg = sensor_msgs.msg.Image()
-    for topic, msg, t in bag.read_messages(topics='/xtion/rgb/image_raw'):
+    for topic, msg, t in bag.read_messages(topics='/xtion/rgb/image_rect_color'):
         pass
 
     I_rgb = bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
