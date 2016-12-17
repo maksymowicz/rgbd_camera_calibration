@@ -167,13 +167,13 @@ def mouse_callback(event, x, y, flags, param):
             R_inv = np.linalg.inv(R)
 
             # print
-            print('Rotation Matrix:')
-            print(R_inv)
             print('Translation:')
             print(-t)
             print('Quaternion (w x y z):')
             qat = q.rotation_matrix_to_quaternion(R_inv)
             print(qat)
+            print('ROS tf2 static_transform_publisher friendly output:')
+            print(np.hstack((-t, qat[1:4], qat[0])))
 
             coords = []
 
